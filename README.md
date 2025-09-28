@@ -3,16 +3,24 @@
 ## Project Structure
 ```
 Infrastructure-Configuration
-├── manifests
-│   ├── default
-│   └── monitoring
-├── scripts
-│   └── deploy-argocd.sh
-└── README.md
+    ├── application.yaml
+    ├── manifests
+    │   ├── default
+    │   │   └── *.yaml
+    │   └── monitoring
+    │       └── *.yaml
+    |── scripts
+    |    └── deploy-argocd.sh
+    └── README.md
 ```
 
 ## Overview
 This repository contains infrastructure configuration files and deployment scripts for managing and deploying applications using Argo CD. The `manifests` directory holds Kubernetes manifests organized into different environments, while the `scripts` directory includes automation scripts to facilitate deployment processes.
+
+## Features
+- **Argo CD Integration**: Seamless integration with Argo CD for continuous delivery.
+- **Environment-Specific Manifests**: Separate directories for different environments (default, monitoring).
+- **Automation Scripts**: Scripts to automate deployment and configuration tasks.
 
 ## Directories
 - `manifests`: Contains Kubernetes manifests for different environments.
@@ -23,16 +31,19 @@ This repository contains infrastructure configuration files and deployment scrip
 ## Usage
 ### Requirements
 - Kubernetes cluster
-- Argo CD installed and configured
 - kubectl installed
 - bash shell
 
 ### Installation and Configuration
 1. Clone the repository.
-2. Navigate to the `scripts` directory.
 3. Run the deployment script:
    ```bash
-   chmod +x deploy-argocd.sh
-   ./deploy-argocd.sh
+   chmod +x scripts/deploy-argocd.sh
+   ./scripts/deploy-argocd.sh
    ```
-4. Follow the prompts to complete the deployment process.
+    Note: This operation may take a few minutes to complete.
+4. Configure Argo CD to point to the `application.yaml` file for application management.
+    ```bash
+    kubectl apply -f application.yaml
+    ```
+5. Access the Argo CD UI to manage and monitor your applications.
