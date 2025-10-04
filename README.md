@@ -10,7 +10,8 @@ Infrastructure-Configuration
     │   └── monitoring
     │       └── *.yaml
     |── scripts
-    |    └── deploy-argocd.sh
+    │    ├── deploy_argocd.sh
+    |    └── update_image.sh
     └── README.md
 ```
 
