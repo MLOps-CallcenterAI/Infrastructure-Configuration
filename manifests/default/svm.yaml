@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: callcenter-svm-config
+  name: callcenterai-svm-config
 data:
   MODEL_URI: "models:/m-49e62ea546064bd1b56cff76a8aded2f"
   EXPERIMENT_NAME: "/Users/medhedimaaroufi@gmail.com/CallCenterAI-Model1-TF-IDF-SVM"
@@ -9,7 +9,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: callcenter-svm-secret
+  name: callcenterai-svm-secret
 type: Opaque
 data:
   DATABRICKS_HOST: "aHR0cHM6Ly9kYmMtMjBhNmE1MzUtNWIzNS5jbG91ZC5kYXRhYnJpY2tzLmNvbQ=="
@@ -18,29 +18,29 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: callcenter-svm-deployment
+  name: callcenterai-svm-deployment
   labels:
-    app: callcenter-svm
+    app: callcenterai-svm
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: callcenter-svm
+      app: callcenterai-svm
   template:
     metadata:
       labels:
-        app: callcenter-svm
+        app: callcenterai-svm
     spec:
       containers:
-        - name: callcenter-svm
-          image: medhedimaaroufi/callcenter-svm:v1.0.1
+        - name: callcenterai-svm
+          image: medhedimaaroufi/callcenterai-svm:v1.0.1
           ports:
             - containerPort: 8000
           envFrom:
             - configMapRef:
-                name: callcenter-svm-config
+                name: callcenterai-svm-config
             - secretRef:
-                name: callcenter-svm-secret
+                name: callcenterai-svm-secret
           # Optional: set resource limits
           resources:
             requests:
@@ -53,10 +53,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: callcenter-svm-service
+  name: callcenterai-svm-service
 spec:
   selector:
-    app: callcenter-svm
+    app: callcenterai-svm
   ports:
     - protocol: TCP
       port: 8000
