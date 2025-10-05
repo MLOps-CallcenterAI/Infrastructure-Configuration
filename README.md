@@ -37,6 +37,19 @@ This repository contains infrastructure configuration files and deployment scrip
 * **Environment-Specific Manifests**: Separate manifests for default application and monitoring environments.
 * **Automation Scripts**: Scripts for Argo CD deployment and updating Docker image tags.
 
+## Documentation
+
+Detailed guides are available in the `Docs` folder:
+
+* **Manifests**
+
+  * [`svm.md`](Docs/manifests/default/svm.md) → Details about the SVM model Kubernetes configuration (ConfigMap, Secret, Deployment, Service).
+* **Scripts**
+
+  * [`deploy_argocd.md`](Docs/scripts/deploy_argocd.md) → Instructions for deploying Argo CD to the cluster.
+  * [`update_image.md`](Docs/scripts/update_image.md) → How to update container image tags in Kubernetes manifests.
+
+
 ## Directories
 
 * `manifests`
