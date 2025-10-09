@@ -59,6 +59,7 @@ spec:
     app: callcenterai-svm
   ports:
     - protocol: TCP
+      nodePort: 30001
       port: 8000
       targetPort: 8000
-  type: LoadBalancer
+  type: NodePort
