@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: callcenterai-app
-          image: medhedimaaroufi/callcenterai-app:v1.0.1
+          image: medhedimaaroufi/callcenterai-app:v1.0.3
           ports:
             - containerPort: 5000
           env:
