@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: callcenterai-app-deployment
+  labels:
+    app: callcenterai-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: callcenterai-app
+  template:
+    metadata:
+      labels:
+        app: callcenterai-app
+    spec:
+      containers:
+        - name: callcenterai-app
+          image: medhedimaaroufi/callcenterai-app:v1.0.1
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MODEL_API_URL
+              value: service://callcenterai-svm-service:8000
+          # Optional: set resource limits
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: callcenterai-app-service
+spec:
+  selector:
+    app: callcenterai-app
+  ports:
+    - protocol: TCP
+      nodePort: 30001
+      port: 5000
+      targetPort: 5000
+  type: NodePort
