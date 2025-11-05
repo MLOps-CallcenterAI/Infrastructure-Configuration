@@ -21,7 +21,7 @@ spec:
             - containerPort: 5000
           env:
             - name: MODEL_API_URL
-              value: service://callcenterai-svm-service:8000
+              value: http://callcenterai-svm-service:8000
           # Optional: set resource limits
           resources:
             requests:
