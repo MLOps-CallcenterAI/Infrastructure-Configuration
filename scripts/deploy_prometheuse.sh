@@ -13,6 +13,7 @@ NC='\033[0m' # No Color
 NAMESPACE="monitoring"
 RELEASE_NAME="prometheus"
 HELM_CHART="prometheus-community/kube-prometheus-stack"
+VALUES_FILE="values.yaml"
 
 # Functions
 print_header() {
@@ -79,6 +80,169 @@ detect_kubernetes_platform() {
     fi
 }
 
+create_values_file() {
+    local platform=$1
+    local enable_persistence=$2
+    
+    print_info "Creating values.yaml for platform: $platform"
+    
+    if [[ "$platform" == "docker-desktop" ]]; then
+        # Docker Desktop configuration - disable node exporter
+        if [[ "$enable_persistence" == "true" ]]; then
+            cat > $VALUES_FILE << 'EOF'
+# Prometheus configuration
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+# Disable node exporter for Docker Desktop (mount propagation issues)
+nodeExporter:
+  enabled: false
+
+# Grafana configuration
+grafana:
+  adminPassword: admin
+  persistence:
+    enabled: true
+    size: 5Gi
+  
+  # Pre-configure Prometheus datasource
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+        access: proxy
+        isDefault: true
+
+# Alertmanager configuration
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+EOF
+        else
+            cat > $VALUES_FILE << 'EOF'
+# Prometheus configuration
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+
+# Disable node exporter for Docker Desktop (mount propagation issues)
+nodeExporter:
+  enabled: false
+
+# Grafana configuration
+grafana:
+  adminPassword: admin
+  
+  # Pre-configure Prometheus datasource
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+        access: proxy
+        isDefault: true
+EOF
+        fi
+    else
+        # Other platforms - enable node exporter
+        if [[ "$enable_persistence" == "true" ]]; then
+            cat > $VALUES_FILE << 'EOF'
+# Prometheus configuration
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+# Node exporter configuration
+nodeExporter:
+  enabled: true
+
+# Grafana configuration
+grafana:
+  adminPassword: admin
+  persistence:
+    enabled: true
+    size: 5Gi
+  
+  # Pre-configure Prometheus datasource
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+        access: proxy
+        isDefault: true
+
+# Alertmanager configuration
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+EOF
+        else
+            cat > $VALUES_FILE << 'EOF'
+# Prometheus configuration
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+
+# Node exporter configuration
+nodeExporter:
+  enabled: true
+
+# Grafana configuration
+grafana:
+  adminPassword: admin
+  
+  # Pre-configure Prometheus datasource
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+        access: proxy
+        isDefault: true
+EOF
+        fi
+    fi
+    
+    print_success "values.yaml created successfully"
+}
+
 # Main script
 print_header "Prometheus + Grafana Deployment Script"
 
@@ -114,6 +278,16 @@ fi
 PLATFORM=$(detect_kubernetes_platform)
 print_info "Detected platform: $PLATFORM"
 
+# Ask for persistence
+read -p "Enable persistent storage? (yes/no) [default: no]: " enable_persistence
+if [[ $enable_persistence == "yes" || $enable_persistence == "y" ]]; then
+    ENABLE_PERSISTENCE="true"
+    print_info "Persistent storage will be enabled"
+else
+    ENABLE_PERSISTENCE="false"
+    print_info "Persistent storage will be disabled"
+fi
+
 # Ask for confirmation
 print_warning "This will deploy Prometheus and Grafana to namespace '$NAMESPACE'"
 read -p "Do you want to continue? (yes/no): " confirm
@@ -145,8 +319,18 @@ else
     print_success "Namespace '$NAMESPACE' created"
 fi
 
+# Create values.yaml
+print_header "Step 4: Generating values.yaml"
+
+create_values_file "$PLATFORM" "$ENABLE_PERSISTENCE"
+
+print_info "Generated values.yaml content:"
+echo -e "${YELLOW}----------------------------------------${NC}"
+cat $VALUES_FILE
+echo -e "${YELLOW}----------------------------------------${NC}"
+
 # Check if release already exists
-print_header "Step 4: Checking Existing Installation"
+print_header "Step 5: Checking Existing Installation"
 
 if helm list -n $NAMESPACE | grep -q $RELEASE_NAME; then
     print_warning "Release '$RELEASE_NAME' already exists in namespace '$NAMESPACE'"
@@ -163,38 +347,27 @@ else
 fi
 
 # Install or upgrade Prometheus stack
-print_header "Step 5: ${ACTION^}ing Prometheus Stack"
-
-# Set node exporter based on platform
-if [[ "$PLATFORM" == "docker-desktop" ]]; then
-    print_warning "Docker Desktop detected - disabling node exporter due to mount propagation issues"
-    NODE_EXPORTER_FLAG="--set nodeExporter.enabled=false"
-else
-    print_info "Enabling node exporter"
-    NODE_EXPORTER_FLAG="--set nodeExporter.enabled=true"
-fi
+print_header "Step 6: ${ACTION^}ing Prometheus Stack"
 
 # Perform installation/upgrade
 if [ "$ACTION" == "install" ]; then
     helm install $RELEASE_NAME $HELM_CHART \
         --namespace $NAMESPACE \
-        --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
-        $NODE_EXPORTER_FLAG \
+        --values $VALUES_FILE \
         --wait \
         --timeout 10m
     print_success "Prometheus stack installed successfully"
 else
     helm upgrade $RELEASE_NAME $HELM_CHART \
         --namespace $NAMESPACE \
-        --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
-        $NODE_EXPORTER_FLAG \
+        --values $VALUES_FILE \
         --wait \
         --timeout 10m
     print_success "Prometheus stack upgraded successfully"
 fi
 
 # Wait for pods to be ready
-print_header "Step 6: Verifying Deployment"
+print_header "Step 7: Verifying Deployment"
 
 sleep 10
 wait_for_pods $NAMESPACE 300
@@ -208,7 +381,7 @@ print_info "\nService Status:"
 kubectl get svc -n $NAMESPACE
 
 # Get Grafana password
-print_header "Step 7: Retrieving Grafana Credentials"
+print_header "Step 8: Retrieving Grafana Credentials"
 
 GRAFANA_PASSWORD=$(kubectl get secret -n $NAMESPACE $RELEASE_NAME-grafana -o jsonpath="{.data.admin-password}" | base64 --decode)
 
@@ -218,6 +391,11 @@ print_success "Grafana credentials retrieved"
 print_header "Deployment Complete!"
 
 echo -e "${GREEN}Prometheus and Grafana have been successfully deployed!${NC}\n"
+
+echo -e "${BLUE}=== Configuration ===${NC}"
+echo -e "Platform: ${GREEN}$PLATFORM${NC}"
+echo -e "Persistent Storage: ${GREEN}$ENABLE_PERSISTENCE${NC}"
+echo -e "Node Exporter: ${GREEN}$([ "$PLATFORM" == "docker-desktop" ] && echo "disabled" || echo "enabled")${NC}\n"
 
 echo -e "${BLUE}=== Access Information ===${NC}\n"
 
@@ -239,7 +417,7 @@ echo -e "  ${GREEN}kubectl port-forward -n $NAMESPACE svc/$RELEASE_NAME-kube-pro
 echo -e "  Then open: ${GREEN}http://localhost:9093${NC}\n"
 
 # Create port-forward script
-print_header "Step 8: Creating Port-Forward Helper Script"
+print_header "Step 9: Creating Port-Forward Helper Script"
 
 cat > access-monitoring.sh << 'EOF'
 #!/bin/bash
@@ -318,8 +496,15 @@ echo -e "  kubectl get pods -n $NAMESPACE\n"
 echo -e "${YELLOW}View services:${NC}"
 echo -e "  kubectl get svc -n $NAMESPACE\n"
 
+echo -e "${YELLOW}View persistent volumes (if enabled):${NC}"
+echo -e "  kubectl get pvc -n $NAMESPACE\n"
+
 echo -e "${YELLOW}View logs (example):${NC}"
 echo -e "  kubectl logs -n $NAMESPACE -l app.kubernetes.io/name=prometheus\n"
+
+echo -e "${YELLOW}Update configuration:${NC}"
+echo -e "  Edit values.yaml and run:"
+echo -e "  helm upgrade $RELEASE_NAME $HELM_CHART -n $NAMESPACE -f $VALUES_FILE\n"
 
 echo -e "${YELLOW}Uninstall:${NC}"
 echo -e "  helm uninstall $RELEASE_NAME -n $NAMESPACE\n"
@@ -327,4 +512,5 @@ echo -e "  helm uninstall $RELEASE_NAME -n $NAMESPACE\n"
 echo -e "${YELLOW}Access services easily:${NC}"
 echo -e "  ./access-monitoring.sh\n"
 
+print_info "Configuration file saved as: $VALUES_FILE"
 print_success "Deployment script completed successfully!"
