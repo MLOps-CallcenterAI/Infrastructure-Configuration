@@ -19,11 +19,6 @@ spec:
           image: medhedimaaroufi/callcenterai-transformer:v1.0.0
           ports:
             - containerPort: 8000
-          envFrom:
-            - configMapRef:
-                name: callcenterai-transformer-config
-            - secretRef:
-                name: callcenterai-transformer-secret
           # Optional: set resource limits
           resources:
             requests:
