@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: callcenterai-transformer
-          image: medhedimaaroufi/callcenterai-transformer:v1.0.1
+          image: medhedimaaroufi/callcenterai-transformer:v1.0.0
           ports:
             - containerPort: 8000
           envFrom:
