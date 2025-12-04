@@ -8,17 +8,18 @@ Infrastructure-Configuration
 ├── Docs
 │   ├── manifests
 │   │   └── default
+│   │       ├── app.md
 │   │       └── svm.md
 │   └── scripts
 │       ├── deploy_argocd.md
 │       └── update_image.md
 ├── manifests
-│   ├── default
-│   │   └── svm.yaml
-│   └── monitoring
-│       └── nginx-deployment.yaml
+│   └── default
+│       ├── app.yaml
+│       └── svm.yaml
 ├── scripts
 │   ├── deploy_argocd.sh
+│   ├── deploy_prometheuse.sh
 │   └── update_image.sh
 └── README.md
 ```

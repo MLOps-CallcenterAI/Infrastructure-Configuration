@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: callcenterai-transformer-config
+data:
+  MODEL_URI: "models:/m-49e62ea546064bd1b56cff76a8aded2f"
+  EXPERIMENT_NAME: "/Users/medhedimaaroufi@gmail.com/CallCenterAI-Model1-TF-IDF-SVM"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: callcenterai-transformer-secret
+type: Opaque
+data:
+  DATABRICKS_HOST: "aHR0cHM6Ly9kYmMtMjBhNmE1MzUtNWIzNS5jbG91ZC5kYXRhYnJpY2tzLmNvbQ=="
+  DATABRICKS_TOKEN: "ZGFwaTE3ZTJmYTZiMmU5MmFjZDcyYzA2NzEyOTE2Mjk2Y2I4"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: callcenterai-transformer-deployment
+  labels:
+    app: callcenterai-transformer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: callcenterai-transformer
+  template:
+    metadata:
+      labels:
+        app: callcenterai-transformer
+    spec:
+      containers:
+        - name: callcenterai-transformer
+          image: medhedimaaroufi/callcenterai-transformer:v1.0.1
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: callcenterai-transformer-config
+            - secretRef:
+                name: callcenterai-transformer-secret
+          # Optional: set resource limits
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: callcenterai-transformer-service
+spec:
+  selector:
+    app: callcenterai-transformer
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
