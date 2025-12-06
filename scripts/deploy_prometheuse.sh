@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 NAMESPACE="monitoring"
 RELEASE_NAME="prometheus"
 HELM_CHART="prometheus-community/kube-prometheus-stack"
-VALUES_FILE="values.yaml"
+VALUES_FILE="monitoring/values.yaml"
 
 # Functions
 print_header() {

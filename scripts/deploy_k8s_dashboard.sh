@@ -2,7 +2,7 @@
 set -e
 
 DASHBOARD_URL="https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml"
-ADMIN_YAML="dashboard-admin-user.yaml"
+ADMIN_YAML="manifests/k8s-dashboard/dashboard-admin-user.yaml"
 
 echo "===================================================="
 echo " 🚀 Deploying Kubernetes Dashboard"
