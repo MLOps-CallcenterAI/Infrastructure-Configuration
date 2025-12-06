@@ -19,7 +19,7 @@ spec:
           service:
             name: callcenterai-app-service
             port:
-              number: 31201
+              number: 32080
 
   # ArgoCD UI
   - host: argocd.callcenterai.app

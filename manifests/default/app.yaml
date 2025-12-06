@@ -40,7 +40,7 @@ spec:
     app: callcenterai-app
   ports:
     - protocol: TCP
-      nodePort: 31201
+      nodePort: 32080
       port: 5000
       targetPort: 5000
   type: NodePort
