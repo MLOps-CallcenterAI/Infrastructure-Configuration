@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: callcenterai-router-agent
-          image: medhedimaaroufi/callcenterai-router-agent:v1.0.3
+          image: medhedimaaroufi/callcenterai-router-agent:v1.0.4
           ports:
             - containerPort: 5000
           env:
