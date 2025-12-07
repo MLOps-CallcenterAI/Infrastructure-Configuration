@@ -20,7 +20,7 @@ spec:
           ports:
             - containerPort: 5000
           env:
-            - name: MODEL_API_URL
+            - name: ROUTER_AGENT_URL
               value: http://callcenterai-router-agent-service:8000
           # Optional: set resource limits
           resources:
