@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: callcenterai-router-agent-deployment
+  labels:
+    app: callcenterai-router-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: callcenterai-router-agent
+  template:
+    metadata:
+      labels:
+        app: callcenterai-router-agent
+    spec:
+      containers:
+        - name: callcenterai-router-agent
+          image: medhedimaaroufi/callcenterai-router-agent:v1.0.3
+          ports:
+            - containerPort: 5000
+          env:
+            - name: TFIDF_SERVICE_URL
+              value: http://callcenterai-svm-service:8000
+            - name: TRANSFORMER_SERVICE_URL
+              value: http://callcenterai-transformer-service:8000
+          # Optional: set resource limits
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: callcenterai-router-agent-service
+spec:
+  selector:
+    app: callcenterai-router-agent
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
